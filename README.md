@@ -100,8 +100,8 @@ Recording Wind Gust Speed at all Locations will help improve rainfall forecastin
 Other Optional features can be helpful for some model types, but the best models do not need them.
 
 ## Recommendation
-** Newcastle and Albany should record Wind Gust Speed
-** Newcastle is the worst-predicted location by the Time Series Model
-** Albany is in the bottom 25%
+* Newcastle and Albany should record Wind Gust Speed
+* Newcastle is the worst-predicted location by the Time Series Model
+* Albany is in the bottom 25%
 
 
