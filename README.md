@@ -1,122 +1,107 @@
-# Project 2 -- Bank Helper
+# Project 3 -- Rainfall Prediction Variables
+by Mengyu Jackson
 
 
 
 ## Overview
 
-Our stakeholder is a mortgage lender who would like more accurate appraisals to reduce risk for home loans. We analyzed the King County (CA) House Sales dataset using machine learning to develop a model for predicting the value of a house. The model accurately predicts the value of a house with information available to the bank at time of appraisal, and would be a good tool for making loan decisions. We recommend using this model along with existing appraisers to reduce risk and increase profit margins.
+Australia has a variety of weather stations across the country, which collect data used for rainfall forecasting.
+Although basic metrics are recorded at all stations (Max Temperature, Minimum Temperature, Rainfall), other metrics are intermittently or never recorded at certain stations (such as amount of Sunshine, cloudiness, Evaporation, Pressure, etc.)
+
+The Australian government wants to determine whether additional investment in recording these metrics will improve rainfall forecasting in these areas.
+
+Our models (which match state of the art accuracy) are able to predict rainfall at stations which do not collect all metrics as well as stations which do record all metrics.
+
+Spending more money to collect these metrics will not improve rainfall forecasting.
 
 
 ## Business Problem
 
-Our stakeholder is a mortgage lender who wants to increase the accuracy of their appraisals in order to reduce the risk of default, especially loans which have the minimum possible down payment (20%) without Private Mortgage Insurance. These loans are worth 80% of the purchase price of the house. If a borrower defaults immediately, our stakeholder wants confidence they'll be able to re-sell the house and cover the entire loan. At the same time, they do not want artificially low appraisals, as those would drive clients to competing lenders. Specifically, we want to maximize the number of appraisals which are between 80% and 105% of the true value of the house in order to minimize risk while remaining attractive to borrowers.
+Australia has a variety of weather stations across the country, which collect data used for rainfall forecasting.
+Although basic metrics are recorded at all stations (Max Temperature, Minimum Temperature, Rainfall), other metrics are intermittently or never recorded at certain stations (such as amount of Sunshine, cloudiness, Evaporation, Pressure, etc.)
+
+The Australian government wants to determine whether additional investment in recording these metrics will improve rainfall forecasting in these areas.
+
+Rainfall forecasting is used for a variety of purposes by the public, and different uses are sensitive to different types of errors (false positive vs false negative) in forecasting. We need to evaluate model performance with and without all features on multiple types of errors.
+
+If additional data is recommended, which data is most important?
+
 
 
 ## Data Understanding
 
-This project uses the King County House Sales dataset, which can be found in `kc_house_data.csv` in the data folder in this repo. The description of the column names can be found in `column_names.md` in the same folder. As with most real world data sets, the column names are not perfectly described, so you'll have to do some research or use your best judgment if you have questions about what the data means.
+This dataset contains about 10 years of daily weather observations from 49 locations across Australia. Not all sites have an equal amount of data, but all have at least 3 years.
+“Core” variables are recorded at all stations
+“Optional” variables are intermittently or never recorded at certain stations 
+26 locations collect all Core and Optional variables
+23 locations never collect at least 1 Optional variable
 
-
-- Where did the data come from, and how do they relate to the data analysis questions?
-    The data come from house sales in King County, and they help us relate all of the features we are interested in (sqft, waterfront, renovated or not)
-- What do the data represent? Who is in the sample and what variables are included?
-    Only houses that have sold are in the sample, and variables include comparisons to nearby houses (_15 suffixed variables), metrics about the house that was sold and its lot (sqft), whether and when renovations were last done, and the original year it was built.
-- What is the target variable?
-    The target variable is the sale price of the house. A secondary target could be views; which could be used as a proxy for time-on-market.
-- What are the properties of the variables you intend to use?
-    Almost all of the variables we intend to use are numeric, except one binary variable (waterfront or not). Some of the variables are cyclic in nature (month), which we hope to capture in our feature selection.
-
-
-### First Model
-
-After decide use sklean, first thing to try is `LinearRegression()`.
-
-
-## Modeling
-
-Try different model:
-
-* Ridge(random_state = RANDOM_SEED),
-* BayesianRidge(),
-* LinearRegression(),
-* RandomForestRegressor(random_state = RANDOM_SEED),
-* GradientBoostingRegressor(random_state = RANDOM_SEED),
-* neural_network.MLPRegressor(solver="lbfgs", random_state = RANDOM_SEED)
-* XGBRegressor() 
-
-Use pipline with PCA, PolynomialFeatures or StandardScaler, use GridSearchCV to found the best hyperparameters:
+Data From Kaggle
+Observations were drawn from numerous weather stations. The daily observations are available from http://www.bom.gov.au/climate/data.
+An example of latest weather observations in Canberra: http://www.bom.gov.au/climate/dwo/IDCJDW2801.latest.shtml
+Definitions adapted from http://www.bom.gov.au/climate/dwo/IDCJDW0000.shtml
+Data source: http://www.bom.gov.au/climate/dwo/ and http://www.bom.gov.au/climate/data.
+Copyright Commonwealth of Australia 2010, Bureau of Meteorology.
 
 
 
-Questions to consider:
+### 1st Model : Linear Model 
+### 2nd Model :  Ada Boost Model
 
-We found explainability was good enough with partial_dependence plots, so we did not restrict our analysis to easily explainable models like linear regression. Explainability was less important because getting the right answer on average is the most important thing for making a profit as a mortgage lender.
+Interim Result
+(Some of) the Optional metrics appear to be important.
 
-Some variables had clear nonlinear effects (yr_built, latitude, longitude), which made it hard to get good performance from a linear model. We tried many different regressors built into scikitlearn with default parameters to decide which models were worth tuning. After we found that GradientBoostingRegressor was best, we decided to install and use xgboost (third party library for boosting decision trees) to see if that improved performance.
+Average Precision consistently drops by ~.05 when these columns are removed, for a variety of models
+AUC_ROC consistently drops by ~.03 when these columns are removed, for a variety of models
+We need to drill down to specific locations to figure out which missing columns are actually problematic...
 
-We decided xgboost was best, so we used GridSearchCV to find good hyperparameters without overfitting. We had to leave it running overnight several days in a row, but the results got us very close to our goal R^2 of .9.
+
+### 3rd Model : Time Series (Location Specific) Models
+
+#### Note:
+
+The Location Specific Time Series Models have combined metrics better than either the LogisticRegression or AdaBoost models in almost every aspect:
+
+* Negative class Precision and Recall are equal or better
+* Positive class Precision is better and recall is close. 
+* F1 scores are better
+* Macro averages for precision recall and f1 score are all better.
+* Weighted averages for precision, recall, and f1-score are equal or better than earlier models.
+
+#### Surprising Result
+
+The Location Specific Time Series models are better for locations which do not record at least one Optional metric:
+* Mean, min, 25%, 75% and max avg_precision are all better
+* 50% avg_precision is nearly identical
+* mean, 25%, 50%, 75%, and max ROC AUC are all better
+
+The minimum ROC AUC is much lower however (.70 vs .79).
+
+Looking at this outlier gives us a key insight:
+
+#### Key Insight
+* Newcastle is by far the worst ROC AUC score of any location specific classifier. 
+* Albany is the second worst out of all sites missing a column. It would be <25% in either group of locations
+* These are the only two sites which do not record the WindGustSpeed Optional metric
+
+
+
+# Final Time Series Results
+
+WindGustSpeed is the only Optional metric that seriously improved the Location Specific Time Series Models (or made them worse when it was missing).
+
+Rainfall predictions for locations missing one or more of the other metrics actually did *better* than predictions for locations with full Optional metrics (this is a good subject for future investigation).
+
+We don't want to assume the Australian government will only ever use Location Specific Time Series models, so we'll check our earlier models. We want to see if "Core+WindGustSpeed" models (trained on all Core features + WindGustSpeed) does better than the Core models (trained on Core features with no Optional features) and is close to the "Full" models (trained on all Core + Optional features)
 
 
 ## Conclusions
+Recording Wind Gust Speed at all Locations will help improve rainfall forecasting at those locations.
+Other Optional features can be helpful for some model types, but the best models do not need them.
 
-The model is very good at predicting house prices in 2014-2015. Training on data outside this period will be necessary to help it understand larger trends in housing prices.
-Using this model to appraise houses nearly guarantees interest made from loans will cover money lost to bad appraisals + default, even under very adverse assumptions (12% foreclosure rate, 2% APR).
-We assumed the market remained stable during foreclosures; we did not analyze the case where a market crash depresses housing values simultaneously with default. That could increase losses significantly in a worst case scenario
-This model could definitely generate a profit, but client should work with us to determine expected ROI using more realistic assumptions of default rate and APR to evaluate whether this model is more profitable than their existing process.
-
-
-
-
-# Interpretation of Linear Model
-
-## Summary
-My final linear model (Orthogonal Matching Pursuit) is worse than most non-linear models I tried at predicting prices, but easy to interpret and explain.
-
-It only uses 10 features with low collinearity, and the R^2 of .752 is still very close to Ordinary Least Squares using all 26 provided and engineered features (.758). The OLS version is much harder to understand, and also much worse than non-linear models.
-
-The features used and their rounded coefficients are 
-
-```
-waterfront:          708,015
-grade:               89,385
-condition:           32,483
-yr_built_below_1978: 2,594
-sqft_living:         215
-zipcode:            -818
-bedrooms:           -34,867
-long:               -293,409
-lat_below_47.64:    -1,163,944
-lat_above_47.64:    -1,605,208
-```
-
-Five(!) of the top 10 features are about lot location (waterfront, zipcode, long, lat_below_47.64, lat_above_47.64). Real estate really is about location, location, location. Waterfront is a huge `$700,000` boost in value.
-
-The yr_built is important for homes built before 1978 but did not make the cut for newer homes, and neither did any renovation metrics. The only variables that a homeowner can control that our model selected were bedrooms, condition, grade, and sqft_living. Fewer bedrooms is actually better, but you want more of everything else. Each step in grade is worth `$90,000`, condition is `$30,000`, and each additional sqft is `$215`.
-
-Don't take any of this analysis too seriously however, analysis shows that key assumptions have been violated and Linear Regression is not a great fit for this dataset.
+## Recommendation
+** Newcastle and Albany should record Wind Gust Speed
+** Newcastle is the worst-predicted location by the Time Series Model
+** Albany is in the bottom 25%
 
 
-
-
-## Multicollinearity of Features 
-
-In the 10 features selected by the OrthogonalMatchingPursuit algorithm https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.OrthogonalMatchingPursuit.html, multicollinearity is very low. Only the (grade, sqft_living) features had a correlation barely above .75	(0.762779). This did not seem problematic enough to correct for. The Heatmap shows the same information (only diagonals seem light pink).
-
-Both OMPCV (Orthogonal Matching Pursuit) and RFECV (Recursive Feature Elimination Cross Validation) which I found looking at sklearn API were good at training linear models to give interpretable results without much multicollinearity.
-
-OMPCV gave slightly better results than RFECV, but was also much faster for me to train, which helped as I experimented with feature engineering.
-
-## Regression Analysis
-### Summary (OMP Model)
-The data seems to violate the assumptions for Linear Regression Models. This is not surprising since the best Linear Model is a lot worse than other models (even before optimization).
-
-### Residual Analysis (OMP Model)
-The residual analysis using both the KDE plot and the QQ plot shows the residuals are not normally distributed. The residual distribution is skewed and light tailed.
-
-### Feature Analysis (OMP Model)
-Many features are not normally distributed, but transforming them using logtransforms did not improve model performance.
-
-### Jarque-Bera Test (statsmodel OLS Model)
-I wasn't sure how to do the Jarque-Bera test directly on an sklearn model, so I trained a new model using statsmodel Ordinary Least Squares using only the 10 features selected by the OMP model. The coefficients are close (e.g., -817.54 vs -793.65 for Zip Code). The statsmodel OLS model has an R^2 that is lower, but that shouldn't change the final analysis. 
-
-Doing the Jarque-Bera test on the OLS model shows results that confirm the residual analysis: Key Assumptions have been violated and Linear Regression is probably not the right choice for this dataset.

@@ -1,34 +1,42 @@
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
+from sklearn.metrics import (
+    PrecisionRecallDisplay,
+    RocCurveDisplay,
+    ConfusionMatrixDisplay,
+)
 
-def pie_chart(data, title = "Non-Title"):
-    labels = []
-    fracs = []
-    for label, frac in data.items():
-        labels.append(label)
-        fracs.append(frac)
-    fig, axs = plt.subplots(1, 1)
 
-    # Shift the second slice using explode
-    axs.pie(fracs, labels=labels, autopct='%.2f%%',shadow=True,
-                  explode=(0.05,) * len(labels))
-    plt.title(title, fontsize=16, weight = 'bold');
+def get_precision_recall_display(summary, plot=True):
+    disp = PrecisionRecallDisplay(
+        precision=summary["precision_recall_curve"][0],
+        recall=summary["precision_recall_curve"][1],
+        average_precision=summary["average_precision_score"],
+    )
+    if plot:
+        disp.plot()
+    return disp
 
-    plt.show()
 
-def bar_chart(data, xlable, ylabel, title):
-    labels = []
-    fracs = []
-    for label, frac in data.items():
-        labels.append(label)
-        fracs.append(frac)
+def get_roc_curve_display(summary, plot=True):
+    disp = RocCurveDisplay(
+        fpr=summary["roc_curve"][0],
+        tpr=summary["roc_curve"][1],
+        roc_auc=summary["roc_auc_score"],
+    )
+    if plot:
+        disp.plot()
+    return disp
 
-    x_pos = [i for i, _ in enumerate(labels)]
-    plt.bar(x_pos, fracs, color='red')
-    plt.xlabel(xlable)
-    plt.ylabel(ylabel)
-    plt.title(title)
 
-    plt.xticks(x_pos, labels)
+def get_confusion_matrix_display(summary, plot=True):
+    disp = ConfusionMatrixDisplay(summary["confusion_matrix"])
+    if plot:
+        disp.plot()
+    return disp
+
+
+def get_all_displays(summary, plot=True):
+    return (
+        get_precision_recall_display(summary),
+        get_roc_curve_display(summary),
+        get_confusion_matrix_display(summary),
+    )
