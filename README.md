@@ -1,4 +1,4 @@
-# Project 3 -- Rainfall Prediction Variables
+# Austrailia Rainfall Prediction
 by Mengyu Jackson
 
 
